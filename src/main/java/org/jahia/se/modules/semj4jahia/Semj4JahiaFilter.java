@@ -56,21 +56,12 @@ public class Semj4JahiaFilter extends AbstractFilter {
     @Override
     public String execute(String previousOut, RenderContext renderContext, Resource resource, RenderChain chain) throws Exception {
         String output = super.execute(previousOut, renderContext, resource, chain);
-        boolean isInstalled = false;
 
-        JCRPropertyWrapper installedModules = renderContext.getSite().getProperty("j:installedModules");
-
-        for (JCRValueWrapper module : installedModules.getValues()) {
-            if (SEMJ4JAHIA_MODULE.equals(module.getString())) {
-                isInstalled = true;
-                break;
-            }
-        }
 
         //Disable the filter in case we are in Content Editor preview.
         boolean isCEPreview = renderContext.getRequest().getAttribute("ce_preview") != null;
 
-        if(isInstalled && !isCEPreview){
+        if(!isCEPreview){
             //update output to add scripts
             output = enhanceOutput(output, renderContext);
         }
@@ -93,38 +84,20 @@ public class Semj4JahiaFilter extends AbstractFilter {
 
         String previewURI = renderContext.getRequest().getRequestURI().replace("editframe","render");
 
-//        //Add context script and html hook to the BODY tag
-//        List<Element> elementList = source.getAllElements(HTMLElementName.BODY);
-//        if (elementList != null && !elementList.isEmpty()) {
-////            final StartTag bodyStartTag = elementList.get(0).getStartTag();
-////            outputDocument.replace(bodyStartTag.getEnd(), bodyStartTag.getEnd() + 1, gtBodyScript);
-//
-//            final EndTag bodyEndTag = elementList.get(0).getEndTag();
-//            outputDocument.insert(bodyEndTag.getBegin(), getBodyHtmlHook(previewURI));
-//        }
-
-
-//        //Add webapp script to the HEAD tag
+        //Add webapp script to the HEAD tag
         List<Element> elementList = source.getAllElements(HTMLElementName.HEAD);
         if (elementList != null && !elementList.isEmpty()) {
             final StartTag headStartTag = elementList.get(0).getStartTag();
-            outputDocument.insert(headStartTag.getEnd(),getHeadScript(previewURI));
+            outputDocument.insert(headStartTag.getEnd(),getHeadScript(previewURI,isModuleEnabled(renderContext)));
         }
 
         output = outputDocument.toString().trim();
         return output;
     }
-//    private String getBodyHtmlHook(String url){
-//        String style = "";//"border:0;visibility:hidden;";
-////        String onLoad = "()=>{const iframeContent = this.contentDocument || this.contentWindow.document;console.log(iframeContent.body.innerHTML);}";
-//        String onLoad = "()=>{console.log('iframe loaded',this)}";
-//        return "\n<iframe onLoad=\""+onLoad+"\" id=\"jahiaPagePreview\" width=\"100\" height=\"100\" src=\""+url+"\" style=\""+style+"\"/>";
-////        return "\n<iframe id=\"jahiaPagePreview\" src=\""+url+"\" ></iframe>";
-//    }
 
-    private String getHeadScript(String previewURI) throws RepositoryException, IOException {
+    private String getHeadScript(String previewURI, boolean isModuleEnabled) throws RepositoryException, IOException {
         StringBuilder headScriptBuilder =
-                new StringBuilder("\n<script type=\"application/javascript\">window.semj4 = window.semj4 || {src:\""+previewURI+"\"};");
+                new StringBuilder("\n<script type=\"application/javascript\">window.semj4 = window.semj4 || {src:\""+previewURI+"\",isModuleEnabled:"+isModuleEnabled+"};");
         headScriptBuilder.append( "\n</script>");
 
         InputStream resourceAsStream = WebUtils.getResourceAsStream("/modules/semj4jahia/javascript/"+SEMJ4JAHIA_SCRIPTNAME);
@@ -133,83 +106,19 @@ public class Semj4JahiaFilter extends AbstractFilter {
 
         return headScriptBuilder.toString();
     }
-//
-//    private List<String> getPageCategories(RenderContext renderContext) throws RepositoryException {
-//        List<String> pageCategories = new ArrayList<String>();
-//        String siteName = renderContext.getSite().getName();
-//        JCRNodeWrapper mainResourceNode = renderContext.getMainResource().getNode();
-//        JCRNodeWrapper pageNode;
-//
-//        if(mainResourceNode.isNodeType("jnt:page")) {
-//            pageNode = mainResourceNode;
-//        }else{
-//            pageNode = JCRContentUtils.getParentOfType(mainResourceNode,"jnt:page");
-//        }
-//
-//        if(pageNode != null) {
-//            pageCategories.add(
-//                pageNode.hasProperty(PAGE_CATEGORY_1_PROPS) ?
-//                    pageNode.getProperty(PAGE_CATEGORY_1_PROPS).getValue().getNode().getProperty("jcr:title").getValue().toString()
-//                    : siteName
-//            );
-//
-//            pageCategories.add(pageNode.getProperty(PAGE_CATEGORY_2_PROPS).getValue().toString());
-//            pageCategories.add(pageNode.getIdentifier());
-//            pageCategories.add(pageNode.getPath());
-//        }
-//        return pageCategories;
-//    }
 
-//    private void manageCookie(RenderContext renderContext){
-//        HttpServletRequest httpServletRequest = renderContext.getRequest();
-//        List<Cookie> cookieNextPreviewList = new ArrayList<>();
-//        Cookie[] cookies = httpServletRequest.getCookies();
-//
-//        if(cookies != null && cookies.length > 0){
-//            cookieNextPreviewList = Arrays.stream(cookies) // convert list to stream
-//                    .filter(cookie -> cookie.getName().equals(SEMJ4JAHIA_USER_COOKIE_NAME))
-//                    .collect(Collectors.toList());
-//        }
-//
-//        //add cookie
-//        if (cookieNextPreviewList.isEmpty()){
-//            if(isJahians(renderContext)){
-//                renderContext.getResponse().addCookie(
-//                    buildCookie(SEMJ4JAHIA_USER_COOKIE_JAHIANS_VALUE,getCookiePath(httpServletRequest))
-//                );
-//            }else{
-//                renderContext.getResponse().addCookie(
-//                    buildCookie(SEMJ4JAHIA_USER_COOKIE_VISITOR_VALUE,getCookiePath(httpServletRequest))
-//                );
-//            }
-//        }else{
-//            //update cookie if needed
-//            Cookie cookie = cookieNextPreviewList.get(0);
-//            if(cookie.getValue().equals(SEMJ4JAHIA_USER_COOKIE_VISITOR_VALUE) && isJahians(renderContext))
-//                renderContext.getResponse().addCookie(
-//                    buildCookie(SEMJ4JAHIA_USER_COOKIE_JAHIANS_VALUE,getCookiePath(httpServletRequest))
-//                );
-//        }
-//    }
+    private boolean isModuleEnabled(RenderContext renderContext) throws RepositoryException {
+        boolean isModuleEnabled = false;
 
-//    private Cookie buildCookie(String value, String path){
-//        Cookie cookie = new Cookie(SEMJ4JAHIA_USER_COOKIE_NAME,value);
-//        cookie.setPath(path);
-//        cookie.setMaxAge(365*24*60*60);//1y in sec
-//        return cookie;
-//    }
-//    private boolean isGuest(RenderContext renderContext){
-//        JahiaUser user = renderContext.getUser();
-//        return "guest".equals(user.getName());
-//    }
-//    private boolean isJahians(RenderContext renderContext){
-//        JahiaUser user = renderContext.getUser();
-//        String email = user.getProperty("j:email");
-//        return (StringUtils.isNotEmpty(email) && email.contains("@jahia.com"));
-//    }
-//    private String getCookiePath(HttpServletRequest httpServletRequest){
-//        String cookiePath = StringUtils.isNotEmpty(httpServletRequest.getContextPath()) ?
-//                httpServletRequest.getContextPath() : "/";
-//        return cookiePath;
-//    }
+        JCRPropertyWrapper installedModules = renderContext.getSite().getProperty("j:installedModules");
+
+        for (JCRValueWrapper module : installedModules.getValues()) {
+            if (SEMJ4JAHIA_MODULE.equals(module.getString())) {
+                isModuleEnabled = true;
+                break;
+            }
+        }
+        return isModuleEnabled;
+    }
+
 }
