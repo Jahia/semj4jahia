@@ -34,20 +34,13 @@ import java.util.stream.Collectors;
 public class Semj4JahiaFilter extends AbstractFilter {
     private static Logger logger = LoggerFactory.getLogger(Semj4JahiaFilter.class);
     private final static String SEMJ4JAHIA_MODULE="semj4jahia";
-
     private final static String SEMJ4JAHIA_SCRIPTNAME="semj4jahia.js";
-//    private final static String SEMJ4JAHIA_MKTSCRIPTNAME="trackingScriptUTM.js";
-//    private final static String SEMJ4JAHIA_USER_COOKIE_NAME = "internal_jahian_user";
-//    private final static String SEMJ4JAHIA_USER_COOKIE_VISITOR_VALUE = "0";
-//    private final static String SEMJ4JAHIA_USER_COOKIE_JAHIANS_VALUE = "1";
-//
-//    private final static String PAGE_CATEGORY_1_PROPS="pageType";
-//    private final static String PAGE_CATEGORY_2_PROPS="j:nodename";
+    private final static String SEMJ4JAHIA_IFRAMEID="jahiaPagePreview4Semj";
 
     @Activate
     public void activate() {
-        setPriority(0);// -1 launch after addStuff
-        setApplyOnModes("edit");//,preview
+        setPriority(0);
+        setApplyOnModes("edit");
         setApplyOnConfigurations("page");
         setApplyOnTemplateTypes("html");
         setSkipOnConfigurations("include,wrapper");//?
@@ -57,7 +50,6 @@ public class Semj4JahiaFilter extends AbstractFilter {
     public String execute(String previousOut, RenderContext renderContext, Resource resource, RenderChain chain) throws Exception {
         String output = super.execute(previousOut, renderContext, resource, chain);
 
-
         //Disable the filter in case we are in Content Editor preview.
         boolean isCEPreview = renderContext.getRequest().getAttribute("ce_preview") != null;
 
@@ -65,7 +57,6 @@ public class Semj4JahiaFilter extends AbstractFilter {
             //update output to add scripts
             output = enhanceOutput(output, renderContext);
         }
-
 
         return output;
     }
@@ -97,7 +88,12 @@ public class Semj4JahiaFilter extends AbstractFilter {
 
     private String getHeadScript(String previewURI, boolean isModuleEnabled) throws RepositoryException, IOException {
         StringBuilder headScriptBuilder =
-                new StringBuilder("\n<script type=\"application/javascript\">window.semj4 = window.semj4 || {src:\""+previewURI+"\",isModuleEnabled:"+isModuleEnabled+"};");
+                new StringBuilder("\n<script type=\"application/javascript\">");
+        headScriptBuilder.append( "\nwindow.semj4 = {");
+        headScriptBuilder.append( "\n src:\""+previewURI+"\"");
+        headScriptBuilder.append( ",\n isModuleEnabled:"+isModuleEnabled);
+        headScriptBuilder.append( ",\n frameId:\""+SEMJ4JAHIA_IFRAMEID+"\"");
+        headScriptBuilder.append( "\n};");
         headScriptBuilder.append( "\n</script>");
 
         InputStream resourceAsStream = WebUtils.getResourceAsStream("/modules/semj4jahia/javascript/"+SEMJ4JAHIA_SCRIPTNAME);
