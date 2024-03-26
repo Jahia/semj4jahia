@@ -9,7 +9,7 @@
     <groupId>org.jahia.se.modules</groupId>
     <artifactId>semji4jahia</artifactId>
     <name>Semji for Jahia</name>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.1</version>
     <packaging>bundle</packaging>
     <description>This is the custom module (Semj for Jahia) for running on a Jahia server.</description>
 
@@ -17,7 +17,7 @@
         <connection>scm:git:git@github.com:Jahia/semj4jahia.git</connection>
         <developerConnection>scm:git:git@github.com:Jahia/semj4jahia.git</developerConnection>
         <url>https://github.com/Jahia/semj4jahia</url>
-      <tag>HEAD</tag>
+      <tag>semji4jahia-1.0.1</tag>
   </scm>
 
     <repositories>
