@@ -23,5 +23,5 @@ window.addEventListener('load', (event) => {
                 topDocument.body.appendChild(iframe);
             }
         }
-    })(window.semj4)
+    })(window.semji4)
 })

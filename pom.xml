@@ -7,8 +7,8 @@
         <version>8.1.0.0</version>
     </parent>
     <groupId>org.jahia.se.modules</groupId>
-    <artifactId>semj4jahia</artifactId>
-    <name>Semj for Jahia</name>
+    <artifactId>semji4jahia</artifactId>
+    <name>Semji for Jahia</name>
     <version>1.0.1-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <description>This is the custom module (Semj for Jahia) for running on a Jahia server.</description>
